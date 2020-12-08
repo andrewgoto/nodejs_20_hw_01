@@ -51,6 +51,7 @@ class CrudServer {
     this.app.use(cors({ origin: process.env.ORIGIN }));
     this.app.use(express.urlencoded({ extended: false }));
     this.app.use(express.json());
+    this.app.use(express.static('public'));
   }
 
   initRouters() {
@@ -71,25 +72,28 @@ class CrudServer {
             .map(item => item.message)
             .join(', ')}`;
         }
-        const status = 'fail';
-        return res.status(400).json({ status: status, message: err.message });
+        const statusName = 'fail';
+        return res
+          .status(400)
+          .json({ status: statusName, message: err.message });
       }
-      next(err);
+      return next(err);
     });
 
     this.app.use((err, req, res, next) => {
-      const statusCode = err.statusCode || 500;
-      const status = err.status || 'error';
-      res.status(statusCode);
-      res.json({ status: status, message: err.message });
+      const status = err.status || 500;
+      const statusName = err.statusName || 'error';
+      return res
+        .status(status)
+        .json({ status: statusName, message: err.message });
     });
   }
 
   startListening() {
-    this.app.listen(process.env.PORT, () => {
+    return this.app.listen(process.env.PORT, () => {
       console.log('Server started listening on port', process.env.PORT);
     });
   }
 }
 
-module.exports = new CrudServer();
+module.exports = CrudServer;

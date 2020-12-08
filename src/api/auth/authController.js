@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const UserModel = require('../users/usersModel');
 const Joi = require('joi');
 const AppError = require('../../helpers/appError');
+const { generateAvatar, handleAvatar } = require('../../helpers/uploadAvatar');
 
 const signUp = async (req, res, next) => {
   const { email, password } = req.body;
@@ -16,14 +17,12 @@ const signUp = async (req, res, next) => {
     password,
     parseInt(process.env.SALT_ROUNDS),
   );
-
-  const newUser = await UserModel.addUser({ email, passwordHash });
-  const { id, subscription } = newUser;
-  res.status(201).json({
-    id,
-    email,
-    subscription,
-  });
+  const randomAvatar = await generateAvatar();
+  await handleAvatar(randomAvatar);
+  const avatarURL = `http://localhost:3000/images/${randomAvatar}`;
+  const newUser = await UserModel.addUser({ email, passwordHash, avatarURL });
+  const { _id, subscription } = newUser;
+  return res.status(201).json({ _id, email, subscription, avatarURL });
 };
 
 const signIn = async (req, res, next) => {
@@ -57,7 +56,7 @@ const signIn = async (req, res, next) => {
 const logout = async (req, res) => {
   await UserModel.updateToken(req.user._id, null);
   req.user = null;
-  res.sendStatus(204);
+  return res.sendStatus(204);
 };
 
 const signSchema = Joi.object({
