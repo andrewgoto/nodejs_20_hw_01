@@ -11,7 +11,7 @@ const authorize = async (req, res, next) => {
   let payload;
   try {
     payload = jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
+  } catch (error) {
     return next(new AppError('Not authorized', 401));
   }
   const user = await UserModel.getUserById(payload.userId);
@@ -22,7 +22,7 @@ const authorize = async (req, res, next) => {
     return next(new AppError('Not authorized', 401));
   }
   req.user = user;
-  next();
+  return next();
 };
 
 module.exports = { authorize };
